@@ -73,7 +73,7 @@
     <!-- TOP HEADER BAR -->
     <header class="w-full max-w-6xl mx-auto flex items-center justify-between bg-white/90 backdrop-blur-sm px-6 py-4 rounded-3xl shadow-md border-2 border-[#b5a28f] mb-4">
         <div class="flex items-center gap-3">
-            <span class="text-3xl">🕵️♂️</span>
+            <span class="text-3xl">🕵️</span>
             <h1 class="text-xl md:text-2xl font-bold text-[#5c4033] tracking-wide">Em nhận diện tin thật, tin giả</h1>
         </div>
         <div class="bg-[#f0c243] text-[#5c4033] px-5 py-2 rounded-2xl font-bold text-lg shadow-sm border border-yellow-500">
@@ -329,27 +329,17 @@
                 const rotationClass = rotations[i % rotations.length];
                 const currentAnswer = selectedAnswers[card.id] || null;
 
-                // Thiết lập giao diện nút Toggle dựa vào trạng thái đáp án của bé
-                let toggleBtnHTML = '';
-                if (currentAnswer === null) {
-                    toggleBtnHTML = `
-                        <button onclick="cycleAnswer(${card.id})" class="bouncy-btn flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-100 border-2 border-gray-300 text-gray-500 font-bold hover:bg-gray-200">
-                            <span>❓</span> Chưa Chọn
+                // Thiết lập giao diện 2 nút chọn
+                let toggleBtnHTML = `
+                    <div class="flex gap-2 w-full justify-center px-2">
+                        <button onclick="setAnswer(${card.id}, 'true')" class="bouncy-btn flex-1 flex items-center justify-center gap-1 md:gap-2 py-2.5 rounded-full border-2 transition-all shadow-sm ${currentAnswer === 'true' ? 'bg-emerald-500 border-emerald-600 text-white shadow-inner scale-95' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'}">
+                            <span class="text-base md:text-lg">✅</span> <span class="font-extrabold text-xs md:text-sm">Tin Thật</span>
                         </button>
-                    `;
-                } else if (currentAnswer === 'true') {
-                    toggleBtnHTML = `
-                        <button onclick="cycleAnswer(${card.id})" class="bouncy-btn flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500 border-2 border-emerald-600 text-white font-extrabold shadow-md">
-                            <span>✅</span> Tin Thật
+                        <button onclick="setAnswer(${card.id}, 'false')" class="bouncy-btn flex-1 flex items-center justify-center gap-1 md:gap-2 py-2.5 rounded-full border-2 transition-all shadow-sm ${currentAnswer === 'false' ? 'bg-red-500 border-red-600 text-white shadow-inner scale-95' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'}">
+                            <span class="text-base md:text-lg">❌</span> <span class="font-extrabold text-xs md:text-sm">Tin Giả</span>
                         </button>
-                    `;
-                } else {
-                    toggleBtnHTML = `
-                        <button onclick="cycleAnswer(${card.id})" class="bouncy-btn flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-500 border-2 border-red-600 text-white font-extrabold shadow-md">
-                            <span>❌</span> Tin Giả
-                        </button>
-                    `;
-                }
+                    </div>
+                `;
 
                 // Vẽ cấu trúc thẻ Pinned Card (Giấy ghim)
                 const cardHTML = `
@@ -372,12 +362,7 @@
                             "${card.title}"
                         </p>
 
-                        <!-- Nội dung giả lập lượn sóng không đọc được chữ -->
-                        <div class="w-full mt-5 pt-3 border-t border-dashed border-gray-200">
-                            <div class="wavy-line w-full"></div>
-                            <div class="wavy-line w-4/5 mx-auto"></div>
-                            <div class="wavy-line w-5/6 mx-auto"></div>
-                        </div>
+                        <!-- Nội dung giả lập lượn sóng không đọc được chữ (Đã xóa theo yêu cầu) -->
                     </div>
                 `;
                 container.innerHTML += cardHTML;
@@ -386,16 +371,9 @@
             checkFormValidity();
         }
 
-        // Cơ chế Toggle trạng thái xoay vòng: Chưa chọn (null) -> Thật ('true') -> Giả ('false') -> Chưa chọn (null)
-        window.cycleAnswer = function(cardId) {
-            const current = selectedAnswers[cardId];
-            if (current === undefined || current === null) {
-                selectedAnswers[cardId] = 'true';
-            } else if (current === 'true') {
-                selectedAnswers[cardId] = 'false';
-            } else {
-                selectedAnswers[cardId] = null;
-            }
+        // Thiết lập đáp án
+        window.setAnswer = function(cardId, value) {
+            selectedAnswers[cardId] = value;
             // Tải lại giao diện của vòng chơi để cập nhật nút bấm tức thì
             loadRound(currentRoundIndex);
         }
