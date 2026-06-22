@@ -67,7 +67,7 @@
         </h2>
         
         <!-- Cards Container -->
-        <div id="cards-container" class="flex flex-row justify-center items-center gap-6 lg:gap-10 w-full h-[28rem]">
+        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
             <!-- Cards will be injected here via JS -->
         </div>
     </main>
@@ -172,10 +172,10 @@
             // Shuffle rounds completely
             rounds = [...allRoundsData].sort(() => Math.random() - 0.5);
             currentRoundIndex = 0;
-            renderRound();
+            loadRound();
         }
 
-        function renderRound() {
+        function loadRound() {
             const round = rounds[currentRoundIndex];
             cardStates = [null, null, null];
             
@@ -185,14 +185,13 @@
             const container = document.getElementById('cards-container');
             container.innerHTML = '';
             
+            let htmlContent = '';
+            
             round.cards.forEach((card, index) => {
                 const rotation = (Math.random() * 3 - 1.5).toFixed(1);
                 
-                const cardEl = document.createElement('div');
-                cardEl.className = \`relative bg-white rounded-3xl shadow-xl p-5 lg:p-7 flex flex-col items-center transform transition-transform hover:scale-[1.02] duration-300 w-[31%] max-w-[22rem] min-w-[16rem] h-full border border-gray-100\`;
-                cardEl.style.transform = \`rotate(\${rotation}deg)\`;
-                
-                cardEl.innerHTML = \`
+                htmlContent += \`
+                <div class="relative bg-white rounded-3xl shadow-xl p-5 lg:p-7 flex flex-col items-center transform transition-transform hover:scale-[1.02] duration-300 w-full h-full border border-gray-100" style="transform: rotate(\${rotation}deg)">
                     <!-- Pushpin Button -->
                     <div id="pin-\${index}" class="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.15)] flex items-center justify-center text-3xl font-bold transition-all duration-300 border-[5px] border-gray-200 bg-white text-gray-400 cursor-pointer select-none" onclick="togglePin(\${index})">
                         ❓
@@ -214,9 +213,12 @@
                         <div class="wavy-line text-lg lg:text-xl font-bold" style="animation-duration: 2.8s; width: 90%;">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</div>
                         <div class="wavy-line text-lg lg:text-xl font-bold" style="animation-duration: 3.5s; width: 80%;">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</div>
                     </div>
+                </div>
                 \`;
-                container.appendChild(cardEl);
             });
+            
+            // Cộng dồn chuỗi HTML giao diện thẻ vào container.innerHTML
+            container.innerHTML += htmlContent;
             
             updateSubmitButton();
         }
@@ -306,7 +308,7 @@
         function nextRound() {
             hideSuccessModal();
             currentRoundIndex++;
-            renderRound();
+            loadRound();
         }
 
         function showWinScreen() {
