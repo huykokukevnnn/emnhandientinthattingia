@@ -12,6 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Thư viện hiệu ứng pháo hoa Confetti khi chiến thắng -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Thư viện kéo thả cho thiết bị cảm ứng -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
+
     <!-- FontAwesome để lấy các icon sinh động -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -66,6 +72,55 @@
         .bouncy-btn:active {
             transform: scale(0.9);
         }
+    
+        /* Sticker & Drag Drop */
+        .sticker-bank {
+            background-image: linear-gradient(to right, #f8f9fa, #e9ecef);
+        }
+        .sticker {
+            cursor: grab;
+            touch-action: none; /* Required for polyfill */
+            transition: transform 0.2s;
+        }
+        .sticker:active {
+            cursor: grabbing;
+        }
+        .sticker:hover {
+            transform: scale(1.1) rotate(-5deg);
+        }
+        .drop-zone {
+            transition: outline 0.2s, background-color 0.2s;
+        }
+        .drop-zone.drag-over {
+            outline: 4px dashed #f59e0b;
+            background-color: #fef3c7;
+        }
+        .stamp-overlay {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 4px solid;
+            transform: rotate(-15deg);
+            z-index: 20;
+            opacity: 0.9;
+            pointer-events: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stamp-true {
+            color: #10b981;
+            border-color: #10b981;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .stamp-false {
+            color: #ef4444;
+            border-color: #ef4444;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden p-4 md:p-6 select-none">
@@ -97,17 +152,34 @@
     </main>
 
     <!-- FOOTER & ACTIONS -->
-    <footer class="w-full max-w-6xl mx-auto flex flex-col items-center gap-3 mt-4">
-        <!-- Thông báo Trạng thái (Toast ẩn/hiện động) -->
-        <div id="status-toast" class="opacity-0 translate-y-2 pointer-events-none transition-all duration-300 bg-red-100 border-2 border-red-400 text-red-700 font-bold px-6 py-3 rounded-2xl flex items-center gap-2 shadow-md">
-            <span class="text-xl">⚠️</span>
-            <span id="toast-message">Bạn đã phân biệt sai tin giả!</span>
+    <footer class="w-full max-w-6xl mx-auto flex flex-col items-center gap-4 mt-2">
+        <!-- Khay nhãn dán (Sticker Bank) -->
+        <div class="sticker-bank w-full md:w-2/3 p-4 rounded-3xl border-2 border-gray-300 shadow-inner flex flex-col items-center gap-3">
+            <h3 class="font-bold text-gray-500 uppercase tracking-widest text-sm">Kéo thả nhãn dán vào bài báo</h3>
+            <div class="flex justify-center gap-6 md:gap-12 w-full">
+                <!-- Nhãn Tin Thật -->
+                <div draggable="true" ondragstart="dragStart(event, 'true')" class="sticker bg-emerald-500 border-b-4 border-emerald-700 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg flex items-center gap-2 select-none">
+                    <span class="text-2xl drop-shadow-md">✅</span> <span class="text-lg md:text-xl">TIN THẬT</span>
+                </div>
+                <!-- Nhãn Tin Giả -->
+                <div draggable="true" ondragstart="dragStart(event, 'false')" class="sticker bg-red-500 border-b-4 border-red-700 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg flex items-center gap-2 select-none">
+                    <span class="text-2xl drop-shadow-md">❌</span> <span class="text-lg md:text-xl">TIN GIẢ</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Nút kiểm tra / Tiến lên -->
-        <button id="submit-btn" class="bouncy-btn px-10 py-4 bg-gray-400 text-white font-bold text-xl rounded-2xl shadow-lg border-b-4 border-gray-600 cursor-not-allowed" disabled>
-            Hoàn thành
-        </button>
+        <div class="flex items-center gap-4 w-full md:w-2/3 justify-between">
+            <!-- Thông báo Trạng thái (Toast ẩn/hiện động) -->
+            <div id="status-toast" class="opacity-0 translate-y-2 pointer-events-none transition-all duration-300 bg-red-100 border-2 border-red-400 text-red-700 font-bold px-4 py-3 rounded-2xl flex items-center gap-2 shadow-md flex-1">
+                <span class="text-xl">⚠️</span>
+                <span id="toast-message" class="text-sm md:text-base">Bạn đã phân biệt sai tin giả!</span>
+            </div>
+
+            <!-- Nút kiểm tra / Tiến lên -->
+            <button id="submit-btn" class="bouncy-btn px-8 py-3 bg-gray-400 text-white font-bold text-lg md:text-xl rounded-2xl shadow-lg border-b-4 border-gray-600 cursor-not-allowed shrink-0" disabled>
+                Hoàn thành
+            </button>
+        </div>
     </footer>
 
     <!-- POPUP CHIẾN THẮNG CHUNG CUỘC -->
@@ -365,55 +437,52 @@
                 const rotationClass = rotations[i % rotations.length];
                 const currentAnswer = selectedAnswers[card.id] || null;
 
-                // Thiết lập giao diện 2 nút chọn
-                let toggleBtnHTML = `
-                    <div class="flex gap-2 w-full justify-center px-2 mt-2">
-                        <button onclick="setAnswer(${card.id}, 'true')" class="bouncy-btn flex-1 flex items-center justify-center gap-1 md:gap-2 py-2 rounded-xl border-2 transition-all shadow-sm ${currentAnswer === 'true' ? 'bg-emerald-500 border-emerald-600 text-white shadow-inner scale-95' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'}">
-                            <span class="text-base">✅</span> <span class="font-extrabold text-xs md:text-sm">Tin Thật</span>
-                        </button>
-                        <button onclick="setAnswer(${card.id}, 'false')" class="bouncy-btn flex-1 flex items-center justify-center gap-1 md:gap-2 py-2 rounded-xl border-2 transition-all shadow-sm ${currentAnswer === 'false' ? 'bg-red-500 border-red-600 text-white shadow-inner scale-95' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'}">
-                            <span class="text-base">❌</span> <span class="font-extrabold text-xs md:text-sm">Tin Giả</span>
-                        </button>
-                    </div>
-                `;
+                // Giao diện Stamp khi đã kéo thả nhãn vào
+                let stampHTML = '';
+                if (currentAnswer === 'true') {
+                    stampHTML = `<div class="stamp-overlay stamp-true">✅ TIN THẬT</div>`;
+                } else if (currentAnswer === 'false') {
+                    stampHTML = `<div class="stamp-overlay stamp-false">❌ TIN GIẢ</div>`;
+                }
 
-                // Vẽ cấu trúc thẻ bài báo (Newspaper clipping)
+                // Vẽ cấu trúc thẻ bài báo làm Drop Zone
                 const cardHTML = `
-                    <div class="pinned-card ${rotationClass} rounded-2xl flex flex-col justify-between items-stretch text-left relative bg-white border border-gray-200 overflow-hidden pb-4 shadow-lg hover:shadow-xl transition-all">
-                        <!-- Ghim bấm giả lập ở trên đầu tờ giấy -->
+                    <div id="card-${card.id}" 
+                         class="pinned-card drop-zone ${rotationClass} rounded-2xl flex flex-col justify-between items-stretch text-left relative bg-white border border-gray-200 overflow-hidden shadow-lg hover:shadow-xl transition-all h-full"
+                         ondragover="allowDrop(event, this)" 
+                         ondragleave="dragLeave(event, this)"
+                         ondrop="dropSticker(event, ${card.id}, this)">
+                        
+                        <!-- Ghim bấm giả lập -->
                         <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl filter drop-shadow z-10">📌</div>
 
                         <!-- Header bài báo -->
-                        <div class="px-4 pt-5 pb-2 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div class="px-4 pt-5 pb-2 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 pointer-events-none">
                             <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${card.source}</span>
                             <span class="text-[10px] text-gray-400 font-medium">${card.time}</span>
                         </div>
 
                         <!-- Nội dung chính bài báo -->
-                        <div class="px-4 py-3 flex-grow flex flex-col gap-2">
-                            <!-- Tiêu đề lớn -->
-                            <h3 class="text-[#222222] text-base md:text-lg font-extrabold leading-snug line-clamp-3 hover:text-blue-600 cursor-pointer transition-colors">
+                        <div class="px-4 py-3 flex-grow flex flex-col gap-2 pointer-events-none pb-8">
+                            <h3 class="text-[#222222] text-base md:text-lg font-extrabold leading-snug line-clamp-3">
                                 ${card.title}
                             </h3>
                             
-                            <!-- Ảnh minh họa full width -->
-                            <div class="w-full h-28 md:h-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-100 relative my-1 group shrink-0">
-                                <img src="${card.imageUrl}" alt="Thumbnail" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="w-full h-28 md:h-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-100 relative my-1 shrink-0">
+                                <img src="${card.imageUrl}" alt="Thumbnail" class="w-full h-full object-cover">
                             </div>
 
-                            <!-- Sapo / Tóm tắt -->
                             <p class="text-gray-700 text-xs md:text-sm font-semibold italic line-clamp-2 leading-snug">
                                 ${card.summary}
                             </p>
 
-                            <!-- Nội dung chi tiết (nhỏ) -->
                             <p class="text-gray-500 text-xs line-clamp-3 md:line-clamp-4 leading-relaxed text-justify">
                                 ${card.content}
                             </p>
                         </div>
 
-                        <!-- Nút chọn đáp án -->
-                        ${toggleBtnHTML}
+                        <!-- Hiển thị con dấu nếu đã dán nhãn -->
+                        ${stampHTML}
                     </div>
                 `;
                 container.innerHTML += cardHTML;
@@ -422,11 +491,31 @@
             checkFormValidity();
         }
 
-        // Thiết lập đáp án
-        window.setAnswer = function(cardId, value) {
-            selectedAnswers[cardId] = value;
-            // Tải lại giao diện của vòng chơi để cập nhật nút bấm tức thì
-            loadRound(currentRoundIndex);
+        // CÁC HÀM XỬ LÝ KÉO THẢ (DRAG & DROP)
+        window.dragStart = function(event, type) {
+            event.dataTransfer.setData("stickerType", type);
+            event.dataTransfer.effectAllowed = "copy";
+        }
+
+        window.allowDrop = function(event, element) {
+            event.preventDefault(); // Phải có để cho phép thả
+            event.dataTransfer.dropEffect = "copy";
+            if (element) element.classList.add('drag-over');
+        }
+
+        window.dragLeave = function(event, element) {
+            if (element) element.classList.remove('drag-over');
+        }
+
+        window.dropSticker = function(event, cardId, element) {
+            event.preventDefault();
+            if (element) element.classList.remove('drag-over');
+            
+            const stickerType = event.dataTransfer.getData("stickerType");
+            if (stickerType) {
+                selectedAnswers[cardId] = stickerType;
+                loadRound(currentRoundIndex); // Cập nhật lại giao diện để hiển thị con dấu
+            }
         }
 
         // Kiểm tra xem bé đã làm đủ 3 thẻ hay chưa để kích hoạt nút "Hoàn thành"
@@ -552,6 +641,12 @@
 
         // Khởi tạo chạy trò chơi ngay khi trang load xong
         window.addEventListener('DOMContentLoaded', () => {
+            // Kích hoạt Polyfill để hỗ trợ kéo thả trên màn hình cảm ứng iPad/Điện thoại
+            MobileDragDrop.polyfill({
+                dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
+            });
+            window.addEventListener('touchmove', function() {}, {passive: false}); // Yêu cầu của polyfill trên Safari iOS
+            
             initGame();
         });
     </script>
